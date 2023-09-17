@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Momentary Zine - HACKERS & DESIGNERS</title>
+<link rel="stylesheet" type="text/css" href="mz.css" />
+</head>
+<body>
+<h1></h1></div>
+<p>SPEAK INTO THE MIC...</p>
+</body>
+<script type="text/javascript">
+
+var background = '#fff';
+var index = 0;
+
+var postIt = function(str) {
+  var http = new XMLHttpRequest();
+  var url = '/';
+  var params = "str=" + str;
+  http.open("POST", url, true);
+  http.onreadystatechange = function() {
+    console.log('post reply: ' + http.status);
+    if (http.readyState == 4 && http.status == 200) {
+      document.getElementsByTagName('body')[0].style.backgroundColor = '#fff';
+      document.querySelector('body').classList.remove('ubermate');
+      document.querySelector('body').classList.remove('animate');
+      background =  'url(' + http.responseText + ')';
+      document.getElementsByTagName('body')[0].style.backgroundImage = background;
+    }
+  }
+
+  //Send the proper header information along with the request
+  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  //http.setRequestHeader("Content-length", params.length);
+  //http.setRequestHeader("Connection", "close");
+
+  /*
+  http.onreadystatechange = function() {
+    if(http.readyState == 4 && http.status == 200) {
+        alert(http.responseText);
+    }
+  }
+  */
+  http.send(params);
+};
+
+var doIt = function() {
+  document.getElementsByTagName('body')[0].style.backgroundColor = 'black'
+
+  if(index % 3 == 0) {
+    document.querySelector('body').classList.add('ubermate');
+  } else {
+    document.querySelector('body').classList.add('animate');
+  }
+  index++;
+};
+
+var report = function(event) {
+  if(event.error) {
+    console.log('error: ' + event.error + ': ' + event.message);
+  } else {
+    console.log('received event: ' + event.type);
+  }
+}
+
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+
+var start = function() {
+  if (!('webkitSpeechRecognition' in window)) {
+    console.log('webkit speech not supported');
+    return;
+  }
+
+  var recognition = new webkitSpeechRecognition();
+  var lastUpdate = new Date();
+
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en_US';
+
+  recognition.onresult = function(event) {
+    lastUpdate = new Date();
+
+    var result = event.results[event.resultIndex];
+    var transcript = result[0].transcript.toUpperCase();
+    transcript = transcript
+      .replaceAll('F\\*\\*\\*\\*\\*\\*', 'FUCKING')
+      .replaceAll('F\\*\\*\\*\\*\\*', 'FUCKER')
+      .replaceAll('F\\*\\*\\*', 'FUCK')
+      .replaceAll('S\\*\\*\\*\\*\\*', 'SHITEY')
+      .replaceAll('S\\*\\*\\*\\*', 'SLUTY')
+      .replaceAll('S\\*\\*\\*', 'SHIT')
+      .replaceAll('B\\*\\*\\*\\*\\*\\*\\*', 'BULLSHIT')
+      .replaceAll('B\\*\\*\\*\\*', 'BITCH')
+      .replaceAll('A\\*\\*\\*\\*\\*\\*', 'ASSHOLE')
+      .replaceAll('A\\*\\*', 'ASS')
+      .replaceAll('C\\*\\*\\*', 'CUNT')
+
+    document.querySelector('h1').innerHTML = transcript;
+
+    if (result.isFinal) {
+      console.log('Final: ' + transcript);
+      doIt();
+      postIt(transcript);
+    } else {
+      console.log('Interim: ' + transcript);
+    }
+  };
+
+  recognition.addEventListener('error', report);
+  recognition.addEventListener('audiostart', report);
+  recognition.addEventListener('audioend', report);
+  recognition.addEventListener('nomatch', report);
+  recognition.addEventListener('soundstart', report);
+  recognition.addEventListener('soundend', report);
+  recognition.addEventListener('speechstart', report);
+  recognition.addEventListener('speechend', report);
+  recognition.addEventListener('start', report);
+
+  recognition.onend = function() {
+    console.log('restarting recognition...');
+    recognition.start();
+  };
+
+  recognition.start();
+
+  setInterval(function() {
+    var now = new Date();
+    if(now - lastUpdate > 10000) {
+      console.log('warning: resetting idle recognizer')
+      lastUpdate = now;
+      recognition.abort();
+    }
+  }, 1000);
+};
+
+start();
+
+</script>
+</html>
